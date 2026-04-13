@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (Auth UID)
+    // Fields:
+    //   - uid: string (required) - Firebase Auth UID
+    //   - email: string (required) - User email
+    //   - role: string (required, 'admin' | 'client') - User role
+    //   - name: string (optional) - User name
+    //
+    // Collection: properties
+    // Document ID: propertyId
+    // Fields:
+    //   - title: string (required)
+    //   - price: number (required)
+    //   - location: string (required)
+    //   - neighborhood: string (optional)
+    //   - beds: number (optional)
+    //   - baths: number (optional)
+    //   - sqft: number (optional)
+    //   - image_url: string (required)
+    //   - description: string (optional)
+    //   - featured: bool (optional)
+    //
+    // Collection: inquiries
+    // Document ID: inquiryId
+    // Fields:
+    //   - propertyId: string (required)
+    //   - name: string (required)
+    //   - email: string (required)
+    //   - message: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Collection: neighborhoods
+    // Document ID: neighborhoodId
+    // Fields:
+    //   - name: string (required)
+    //   - description: string (required)
+    //   - image_url: string (required)
+    //   - avg_price: number (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          (request.auth.token.email == "jagadeeshnaidu027@gmail.com" && request.auth.token.email_verified == true)
+        );
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.email is string && data.email.size() > 0 &&
+             data.role in ['admin', 'client'];
+    }
+
+    function isValidProperty(data) {
+      return data.keys().hasAll(['title', 'price', 'location', 'image_url']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.price is number && data.price >= 0 &&
+             data.location is string && data.location.size() > 0 &&
+             data.image_url is string && data.image_url.size() > 0;
+    }
+
+    function isValidNeighborhood(data) {
+      return data.keys().hasAll(['name', 'description', 'image_url', 'avg_price']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.description is string && data.description.size() > 0 &&
+             data.image_url is string && data.image_url.size() > 0 &&
+             data.avg_price is number && data.avg_price >= 0;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['propertyId', 'name', 'email', 'message', 'createdAt']) &&
+             data.propertyId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && data.email.size() > 0 &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 5000 &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) && request.resource.data.role == 'client' || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) && request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /properties/{propertyId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidProperty(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /neighborhoods/{neighborhoodId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidNeighborhood(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /inquiries/{inquiryId} {
+      allow read: if isAdmin();
+      allow create: if isValidInquiry(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with role-based access control.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "client"] },
+        "name": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Property": {
+      "title": "Property Listing",
+      "description": "Luxury property listing managed by admins.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "price": { "type": "number" },
+        "location": { "type": "string" },
+        "neighborhood": { "type": "string" },
+        "beds": { "type": "number" },
+        "baths": { "type": "number" },
+        "sqft": { "type": "number" },
+        "image_url": { "type": "string", "format": "uri" },
+        "description": { "type": "string" },
+        "featured": { "type": "boolean" }
+      },
+      "required": ["title", "price", "location", "image_url"]
+    },
+    "Inquiry": {
+      "title": "Property Inquiry",
+      "description": "Inquiry from a potential client.",
+      "type": "object",
+      "properties": {
+        "propertyId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["propertyId", "name", "email", "message"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Private user profiles."
+    },
+    "/properties/{propertyId}": {
+      "schema": "Property",
+      "description": "Public property listings."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": "Inquiry",
+      "description": "Private inquiries accessible only by admins."
+    }
+  }
+}
