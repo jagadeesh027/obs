@@ -108,9 +108,17 @@ const Login = () => {
             {isSignUp ? "Already have an account? Login" : "Need an account? Sign Up"}
           </button>
           {!isSignUp && (
-            <p className="text-[10px] text-white/40 uppercase tracking-widest">
-              Admin Email: <span className="text-white">jagadeeshnaidu027@gmail.com</span>
-            </p>
+            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+              <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">
+                Admin Access
+              </p>
+              <p className="text-[10px] text-white/80 uppercase tracking-widest mb-3">
+                Email: jagadeeshnaidu027@gmail.com
+              </p>
+              <p className="text-[8px] text-[#C5A059] uppercase tracking-widest font-bold">
+                Note: Use "Sign in with Google" above
+              </p>
+            </div>
           )}
         </div>
       </motion.div>

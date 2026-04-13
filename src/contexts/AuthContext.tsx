@@ -34,6 +34,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           let userData: User;
           if (userDoc.exists()) {
             userData = userDoc.data() as User;
+            // Force admin role if email matches admin email
+            if (firebaseUser.email === "jagadeeshnaidu027@gmail.com" && userData.role !== "admin") {
+              userData.role = "admin";
+              await setDoc(userDocRef, userData, { merge: true });
+            }
           } else {
             // Create a new user profile if it doesn't exist
             userData = {
