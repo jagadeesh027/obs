@@ -3,9 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { MapPin, Bed, Bath, Maximize, Search, SlidersHorizontal, X } from "lucide-react";
 import { Property } from "../types";
-import { db } from "../firebase";
-import { collection, onSnapshot } from "firebase/firestore";
-import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
+import { api } from "../services/api";
 
 const Properties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -18,16 +16,15 @@ const Properties = () => {
   const [minBaths, setMinBaths] = useState<number>(0);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "properties"), 
-      (snapshot) => {
-        setProperties(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.LIST, "properties");
+    const fetchProperties = async () => {
+      try {
+        const data = await api.getProperties();
+        setProperties(data);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
       }
-    );
-    return unsubscribe;
+    };
+    fetchProperties();
   }, []);
 
   const filtered = properties.filter(p => {
@@ -163,15 +160,26 @@ const Properties = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {filtered.length > 0 ? (
-            filtered.map((property) => (
+            filtered.map((property, idx) => (
               <motion.div 
                 layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ 
+                  rotateY: idx % 3 === 0 ? 5 : idx % 3 === 1 ? 0 : -5,
+                  rotateX: 3,
+                  z: 30,
+                  scale: 1.02
+                }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 260, 
+                  damping: 20 
+                }}
                 key={property.id}
-                className="group"
+                className="group preserve-3d"
               >
-                <div className="relative aspect-[4/5] overflow-hidden mb-6">
+                <div className="relative aspect-[4/5] overflow-hidden mb-6 shadow-2xl">
                   <img 
                     src={property.image_url} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 

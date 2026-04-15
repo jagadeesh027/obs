@@ -40,9 +40,7 @@ const AppRoutes = () => {
           <Route 
             path="/admin" 
             element={
-              <ProtectedRoute adminOnly>
-                <AdminDashboard />
-              </ProtectedRoute>
+              <AdminDashboard />
             } 
           />
         </Routes>

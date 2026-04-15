@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (userDoc.exists()) {
             userData = userDoc.data() as User;
             // Force admin role if email matches admin email
-            if (firebaseUser.email === "jagadeeshnaidu027@gmail.com" && userData.role !== "admin") {
+            if (firebaseUser.email === "obs012704@gmail.com" && userData.role !== "admin") {
               userData.role = "admin";
               await setDoc(userDocRef, userData, { merge: true });
             }
@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userData = {
               uid: firebaseUser.uid,
               email: firebaseUser.email || "",
-              role: firebaseUser.email === "jagadeeshnaidu027@gmail.com" ? "admin" : "client",
+              role: firebaseUser.email === "obs012704@gmail.com" ? "admin" : "client",
               name: firebaseUser.displayName || "",
             };
             await setDoc(userDocRef, userData);

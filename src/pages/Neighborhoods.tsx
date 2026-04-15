@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Neighborhood } from "../types";
-import { db } from "../firebase";
-import { collection, onSnapshot } from "firebase/firestore";
-import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
+import { api } from "../services/api";
 
 const Neighborhoods = () => {
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "neighborhoods"), 
-      (snapshot) => {
-        setNeighborhoods(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.LIST, "neighborhoods");
+    const fetchNeighborhoods = async () => {
+      try {
+        const data = await api.getNeighborhoods();
+        setNeighborhoods(data);
+      } catch (error) {
+        console.error("Error fetching neighborhoods:", error);
       }
-    );
-    return unsubscribe;
+    };
+    fetchNeighborhoods();
   }, []);
 
   return (
@@ -33,20 +30,30 @@ const Neighborhoods = () => {
           {neighborhoods.map((n, idx) => (
             <motion.div 
               key={n.id}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className={`flex flex-col ${idx % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"} gap-16 items-center`}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              viewport={{ once: true, margin: "-100px" }}
+              className={`flex flex-col ${idx % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"} gap-16 items-center perspective-1000`}
             >
-              <div className="w-full md:w-1/2 aspect-[4/3] overflow-hidden">
+              <motion.div 
+                whileHover={{ rotateY: idx % 2 === 0 ? 5 : -5, scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 100 }}
+                className="w-full md:w-1/2 aspect-[4/3] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] preserve-3d"
+              >
                 <img 
                   src={n.image_url} 
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" 
+                  className="w-full h-full object-cover transition-transform duration-1000" 
                   alt={n.name}
                   referrerPolicy="no-referrer"
                 />
-              </div>
-              <div className="w-full md:w-1/2 space-y-8">
+              </motion.div>
+              <motion.div 
+                initial={{ opacity: 0, x: idx % 2 === 0 ? 20 : -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+                className="w-full md:w-1/2 space-y-8"
+              >
                 <h2 className="text-4xl font-light italic font-serif">{n.name}</h2>
                 <p className="text-white/60 leading-loose text-lg font-light">
                   {n.description}
@@ -58,7 +65,7 @@ const Neighborhoods = () => {
                 <button className="px-10 py-4 border border-white/30 text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-all">
                   Explore Listings
                 </button>
-              </div>
+              </motion.div>
             </motion.div>
           ))}
         </div>

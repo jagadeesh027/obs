@@ -1,23 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import { ChevronRight, MapPin } from "lucide-react";
 import { Property } from "../types";
-import { db } from "../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
+import { api } from "../services/api";
 
 const Home = () => {
   const [featured, setFeatured] = useState<Property[]>([]);
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.2]);
 
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const q = query(collection(db, "properties"), where("featured", "==", true));
-        const querySnapshot = await getDocs(q);
-        setFeatured(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
+        const data = await api.getProperties();
+        setFeatured(data.filter((p: Property) => p.featured));
       } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, "properties");
+        console.error("Error fetching properties:", error);
       }
     };
     fetchFeatured();
@@ -26,26 +32,18 @@ const Home = () => {
   return (
     <div className="bg-white text-[#C5A059]">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <motion.img 
-            initial={{ scale: 1 }}
-            animate={{ scale: 1.15 }}
-            transition={{ 
-              duration: 20, 
-              repeat: Infinity, 
-              repeatType: "reverse", 
-              ease: "linear" 
-            }}
+      <section ref={heroRef} className="relative h-screen flex items-center justify-center overflow-hidden perspective-1000">
+        <motion.div style={{ y, scale }} className="absolute inset-0 z-0">
+          <img 
             src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1920&q=80" 
             className="w-full h-full object-cover"
             alt="Hero"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-white"></div>
-        </div>
+        </motion.div>
         
-        <div className="relative z-10 text-center px-6">
+        <motion.div style={{ opacity }} className="relative z-10 text-center px-6">
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,7 +72,7 @@ const Home = () => {
               Build Custom Estate
             </Link>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Featured Properties */}
@@ -95,14 +93,25 @@ const Home = () => {
               key={property.id}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
+              whileHover={{ 
+                rotateY: idx % 2 === 0 ? 5 : -5,
+                rotateX: 2,
+                z: 50,
+                scale: 1.02
+              }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 20,
+                delay: idx * 0.1 
+              }}
               viewport={{ once: true }}
-              className="group cursor-pointer"
+              className="group cursor-pointer preserve-3d"
             >
-              <div className="relative aspect-[16/10] overflow-hidden mb-6">
-                <img 
+              <div className="relative aspect-[16/10] overflow-hidden mb-6 shadow-2xl">
+                <motion.img 
                   src={property.image_url} 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+                  className="w-full h-full object-cover transition-transform duration-1000" 
                   alt={property.title}
                   referrerPolicy="no-referrer"
                 />

@@ -43,6 +43,15 @@ db.exec(`
     image_url TEXT,
     avg_price INTEGER
   );
+
+  CREATE TABLE IF NOT EXISTS inquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    propertyId TEXT,
+    name TEXT,
+    email TEXT,
+    message TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Seed Data if empty
@@ -106,11 +115,32 @@ async function startServer() {
     }
   });
 
+  app.post("/api/properties", (req, res) => {
+    const { title, price, location, neighborhood, beds, baths, sqft, image_url, description, featured } = req.body;
+    const info = db.prepare(`
+      INSERT INTO properties (title, price, location, neighborhood, beds, baths, sqft, image_url, description, featured)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(title, price, location, neighborhood, beds, baths, sqft, image_url, description, featured ? 1 : 0);
+    res.json({ id: info.lastInsertRowid, success: true });
+  });
+
+  app.delete("/api/properties/:id", (req, res) => {
+    db.prepare("DELETE FROM properties WHERE id = ?").run(req.params.id);
+    res.json({ success: true });
+  });
+
   app.post("/api/inquire", (req, res) => {
     const { propertyId, name, email, message } = req.body;
-    // In a real app, save to DB or send email
-    console.log(`Inquiry for property ${propertyId} from ${name} (${email}): ${message}`);
+    db.prepare(`
+      INSERT INTO inquiries (propertyId, name, email, message)
+      VALUES (?, ?, ?, ?)
+    `).run(propertyId, name, email, message);
     res.json({ success: true, message: "Inquiry sent successfully. Our agent will contact you shortly." });
+  });
+
+  app.get("/api/inquiries", (req, res) => {
+    const inquiries = db.prepare("SELECT * FROM inquiries ORDER BY createdAt DESC").all();
+    res.json(inquiries);
   });
 
   app.get("/api/neighborhoods", (req, res) => {

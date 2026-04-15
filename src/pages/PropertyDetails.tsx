@@ -3,9 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Send, Phone, Mail } from "lucide-react";
 import { Property } from "../types";
-import { db } from "../firebase";
-import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
+import { api } from "../services/api";
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -19,15 +17,14 @@ const PropertyDetails = () => {
     const fetchProperty = async () => {
       if (!id) return;
       try {
-        const docRef = doc(db, "properties", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setProperty({ id: docSnap.id, ...docSnap.data() } as any);
+        const data = await api.getProperty(id);
+        if (data) {
+          setProperty(data);
         } else {
           navigate("/properties");
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.GET, `properties/${id}`);
+        console.error("Error fetching property:", err);
       } finally {
         setLoading(false);
       }
@@ -39,17 +36,16 @@ const PropertyDetails = () => {
     e.preventDefault();
     setInquiryStatus("sending");
     try {
-      await addDoc(collection(db, "inquiries"), {
+      await api.sendInquiry({
         propertyId: id,
         ...inquiryForm,
-        createdAt: serverTimestamp()
       });
       setInquiryStatus("success");
       setInquiryForm({ name: "", email: "", message: "" });
       setTimeout(() => setInquiryStatus("idle"), 5000);
     } catch (err) {
       setInquiryStatus("idle");
-      handleFirestoreError(err, OperationType.CREATE, "inquiries");
+      console.error("Error sending inquiry:", err);
     }
   };
 
