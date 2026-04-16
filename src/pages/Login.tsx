@@ -10,11 +10,13 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -23,22 +25,38 @@ const Login = () => {
       }
       navigate("/");
     } catch (err: any) {
+      console.error("Auth error:", err.code, err.message);
       if (err.code === "auth/operation-not-allowed") {
-        setError("Email/Password login is not enabled in Firebase Console. Please use Google Sign-In or enable it.");
+        setError("Email/Password login is not enabled in Firebase Console.");
+      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+        setError("Invalid email or password. Please check your credentials.");
+      } else if (err.code === "auth/email-already-in-use") {
+        setError("This email is already registered. Please login instead.");
+      } else if (err.code === "auth/weak-password") {
+        setError("Password should be at least 6 characters.");
+      } else if (err.code === "auth/too-many-requests") {
+        setError("Too many failed attempts. Please try again later.");
       } else {
-        setError(err.message);
+        setError("An unexpected error occurred. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
     setError("");
+    setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       navigate("/");
     } catch (err: any) {
-      setError(err.message);
+      if (err.code !== "auth/popup-closed-by-user") {
+        setError("Google Sign-In failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,7 +65,7 @@ const Login = () => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md bg-white/5 p-12 border border-white/10 backdrop-blur-xl"
+        className="w-full max-w-md bg-white/5 p-12 border border-white/10 backdrop-blur-xl rounded-2xl"
       >
         <div className="text-center mb-12">
           <h2 className="text-2xl font-light tracking-widest uppercase mb-2">
@@ -61,9 +79,10 @@ const Login = () => {
         <div className="space-y-6">
           <button 
             onClick={handleGoogleSignIn}
-            className="w-full py-4 bg-white/10 border border-white/20 text-white text-[10px] uppercase tracking-widest font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-3"
+            disabled={loading}
+            className="w-full py-4 bg-white/10 border border-white/20 text-white text-[10px] uppercase tracking-widest font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            <LogIn className="w-4 h-4" /> Sign in with Google
+            <LogIn className="w-4 h-4" /> {loading ? "Connecting..." : "Sign in with Google"}
           </button>
 
           <div className="relative flex items-center py-4">
@@ -79,7 +98,8 @@ const Login = () => {
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-transparent border-b border-white/20 py-2 outline-none focus:border-white transition-colors" 
+                className="w-full bg-transparent border-b border-white/20 py-2 outline-none focus:border-white transition-colors autofill:bg-transparent" 
+                style={{ colorScheme: 'dark' }}
                 required
               />
             </div>
@@ -89,13 +109,26 @@ const Login = () => {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-transparent border-b border-white/20 py-2 outline-none focus:border-white transition-colors" 
+                className="w-full bg-transparent border-b border-white/20 py-2 outline-none focus:border-white transition-colors autofill:bg-transparent" 
+                style={{ colorScheme: 'dark' }}
                 required
               />
             </div>
-            {error && <p className="text-red-500 text-[10px] uppercase tracking-widest text-center leading-relaxed">{error}</p>}
-            <button type="submit" className="w-full py-4 bg-white text-black text-[10px] uppercase tracking-widest font-bold hover:bg-white/90 transition-all">
-              {isSignUp ? "Register" : "Enter Portal"}
+            {error && (
+              <motion.p 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-400 text-[10px] uppercase tracking-widest text-center leading-relaxed"
+              >
+                {error}
+              </motion.p>
+            )}
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full py-4 bg-white text-black text-[10px] uppercase tracking-widest font-bold hover:bg-white/90 transition-all disabled:opacity-50"
+            >
+              {loading ? "Processing..." : (isSignUp ? "Register" : "Enter Portal")}
             </button>
           </form>
         </div>
