@@ -52,6 +52,12 @@ db.exec(`
     message TEXT,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    userId TEXT,
+    propertyId INTEGER,
+    PRIMARY KEY(userId, propertyId)
+  );
 `);
 
 // Seed Data if empty
@@ -146,6 +152,28 @@ async function startServer() {
   app.get("/api/neighborhoods", (req, res) => {
     const neighborhoods = db.prepare("SELECT * FROM neighborhoods").all();
     res.json(neighborhoods);
+  });
+
+  app.get("/api/favorites/:userId", (req, res) => {
+    const favorites = db.prepare("SELECT propertyId FROM favorites WHERE userId = ?").all(req.params.userId);
+    res.json(favorites.map((f: any) => f.propertyId));
+  });
+
+  app.post("/api/favorites", (req, res) => {
+    const { userId, propertyId } = req.body;
+    if (!userId || !propertyId) {
+      return res.status(400).json({ message: "Missing userId or propertyId" });
+    }
+
+    const existing = db.prepare("SELECT * FROM favorites WHERE userId = ? AND propertyId = ?").get(userId, propertyId);
+    
+    if (existing) {
+      db.prepare("DELETE FROM favorites WHERE userId = ? AND propertyId = ?").run(userId, propertyId);
+      res.json({ favorited: false });
+    } else {
+      db.prepare("INSERT INTO favorites (userId, propertyId) VALUES (?, ?)").run(userId, propertyId);
+      res.json({ favorited: true });
+    }
   });
 
   app.get("/api/market-insights", (req, res) => {

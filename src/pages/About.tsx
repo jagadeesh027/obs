@@ -1,9 +1,13 @@
 import React from "react";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
-const About = () => (
-  <div className="bg-black text-white pt-32 pb-20 px-6 min-h-screen">
-    <motion.div 
+const About = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="bg-black text-white pt-32 pb-20 px-6 min-h-screen">
+      <motion.div 
       initial={{ opacity: 0, scale: 0.9, rotateX: 10 }}
       animate={{ opacity: 1, scale: 1, rotateX: 0 }}
       transition={{ duration: 1, ease: "easeOut" }}
@@ -49,6 +53,7 @@ const About = () => (
       </div>
     </motion.div>
   </div>
-);
+  );
+};
 
 export default About;

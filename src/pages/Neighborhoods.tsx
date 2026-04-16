@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Neighborhood } from "../types";
 import { api } from "../services/api";
 
 const Neighborhoods = () => {
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchNeighborhoods = async () => {
@@ -37,9 +40,9 @@ const Neighborhoods = () => {
               className={`flex flex-col ${idx % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"} gap-16 items-center perspective-1000`}
             >
               <motion.div 
-                whileHover={{ rotateY: idx % 2 === 0 ? 5 : -5, scale: 1.02 }}
+                whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 100 }}
-                className="w-full md:w-1/2 aspect-[4/3] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] preserve-3d"
+                className="w-full md:w-1/2 aspect-[4/3] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]"
               >
                 <img 
                   src={n.image_url} 

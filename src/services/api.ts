@@ -41,4 +41,16 @@ export const api = {
     const res = await fetch("/api/market-insights");
     return res.json();
   },
+  getFavorites: async (userId: string) => {
+    const res = await fetch(`/api/favorites/${userId}`);
+    return res.json();
+  },
+  toggleFavorite: async (userId: string, propertyId: number) => {
+    const res = await fetch("/api/favorites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, propertyId }),
+    });
+    return res.json();
+  },
 };

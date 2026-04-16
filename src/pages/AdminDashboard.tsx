@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth, storage } from "../firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useAuth } from "../contexts/AuthContext";
 import { Property } from "../types";
 import { api } from "../services/api";
-import { Plus, Trash2, Mail, LayoutDashboard, Building2, X, Upload, Image as ImageIcon, Loader2, Lock, ShieldCheck } from "lucide-react";
+import { Plus, Trash2, Mail, LayoutDashboard, Building2, X, Upload, Image as ImageIcon, Loader2, Lock, ShieldCheck, ArrowLeft } from "lucide-react";
 
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [loginError, setLoginError] = useState("");

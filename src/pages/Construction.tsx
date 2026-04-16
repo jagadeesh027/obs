@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Layers, Paintbrush, ArrowRight, CheckCircle, X, Cpu, Leaf, Mountain, Clock, Download, Eye, Zap, Droplets, Sun, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
+import { useNavigate } from "react-router-dom";
+import { Layers, Paintbrush, ArrowRight, CheckCircle, X, Cpu, Leaf, Mountain, Clock, Download, Eye, Zap, Droplets, Sun, ShieldCheck, ArrowLeft } from "lucide-react";
 
 const MATERIALS = [
   { id: "standard", name: "Standard Luxury", desc: "Premium Italian Marble & Teak", cost: 0, image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" },
@@ -162,6 +163,10 @@ const MODEL_DESIGNS = {
 };
 
 const Construction = () => {
+  const navigate = useNavigate();
+  const { scrollY } = useScroll();
+  const backgroundY = useTransform(scrollY, [0, 1000], [0, 200]);
+
   const [sqft, setSqft] = useState<number>(3000);
   const [interiorSqft, setInteriorSqft] = useState<number>(2500);
   const [pricePerSqft, setPricePerSqft] = useState<number>(3000);
@@ -295,8 +300,27 @@ architectural finalization.
   };
 
   return (
-    <div className="bg-black text-white pt-32 pb-20 px-6 min-h-screen">
-      <div className="max-w-6xl mx-auto">
+    <div className="bg-black text-white pt-32 pb-20 px-6 min-h-screen relative overflow-hidden">
+      {/* Dynamic Atmospheric Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <AnimatePresence mode="wait">
+          <motion.img 
+            key={`${selectedStyle.id}-${isNight}`}
+            style={{ y: backgroundY }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.15 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            src={isNight ? selectedStyle.nightImage : selectedStyle.dayImage}
+            alt="Construction Background"
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black" />
+      </div>
+
+      <div className="max-w-6xl mx-auto relative z-10">
         <div className="mb-20 text-center">
           <p className="text-[10px] uppercase tracking-[0.5em] text-white/40 mb-4">Build Your Legacy</p>
           <h1 className="text-5xl font-light tracking-tight mb-8">Construction & Interior Estimator</h1>
@@ -358,8 +382,10 @@ architectural finalization.
               {/* Price Tier Selection */}
               <div className="space-y-4 relative overflow-hidden p-8 rounded-xl border border-white/40 group bg-black shadow-2xl min-h-[200px] flex flex-col justify-center">
                 <div className="absolute inset-0 z-0">
-                  <img 
-                    src="https://images.unsplash.com/photo-1503387762-592dee58c460?auto=format&fit=crop&w=1200&q=80"
+                  <motion.img 
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    src="https://picsum.photos/seed/omni-const/1200/800"
                     alt="Construction Background"
                     className="w-full h-full object-cover opacity-40"
                     referrerPolicy="no-referrer"
@@ -530,9 +556,9 @@ architectural finalization.
                 {modelDesigns.map((design, i) => (
                   <motion.div 
                     key={i}
-                    whileHover={{ rotateY: i % 2 === 0 ? 5 : -5, rotateX: 2, z: 20 }}
+                    whileHover={{ y: -10 }}
                     transition={{ type: "spring", stiffness: 300 }}
-                    className="group cursor-pointer preserve-3d"
+                    className="group cursor-pointer"
                   >
                     <div className="aspect-[4/3] overflow-hidden rounded-xl mb-4 border border-white/10 shadow-xl">
                       <img 
@@ -723,16 +749,11 @@ architectural finalization.
             animate={{ opacity: 1, y: 0 }}
             className="max-w-4xl w-full bg-[#111] border border-white/10 p-12 rounded-3xl relative overflow-y-auto max-h-[90vh]"
           >
-            <button 
-              onClick={() => setShowComparison(false)}
-              className="absolute top-8 right-8 text-white/40 hover:text-white transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            
-            <div className="text-center mb-12">
-              <p className="text-[10px] uppercase tracking-[0.5em] text-[#C5A059] mb-4">Detailed Comparison</p>
-              <h2 className="text-3xl font-light tracking-tight">Construction Tiers</h2>
+            <div className="flex justify-center items-center mb-12">
+              <div className="text-center">
+                <p className="text-[10px] uppercase tracking-[0.5em] text-[#C5A059] mb-4">Detailed Comparison</p>
+                <h2 className="text-3xl font-light tracking-tight">Construction Tiers</h2>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
